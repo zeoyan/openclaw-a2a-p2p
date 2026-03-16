@@ -11,6 +11,8 @@ Use these tools:
 - `a2a_get_task`
 - `a2a_cancel_task`
 - `a2a_refresh_peer_card`
+- `a2a_export_peer_info`
+- `a2a_build_peer_entry`
 
 Operational guidance:
 

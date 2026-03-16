@@ -1,9 +1,9 @@
 {
   "name": "a2a-p2p",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "A2A v1.0 peer-to-peer gateway plugin for OpenClaw",
+  "license": "MIT",
   "main": "index.ts",
   "openclaw": {
     "extensions": ["./index.ts"]

@@ -149,6 +149,8 @@ curl -X POST http://HOST:PORT/a2a/jsonrpc \
 - `a2a_get_task`
 - `a2a_cancel_task`
 - `a2a_refresh_peer_card`
+- `a2a_export_peer_info`
+- `a2a_build_peer_entry`
 
 ---
 
@@ -218,33 +220,4 @@ Another OpenClaw instance can install this repository and communicate with this 
 
 ## License
 
-Add your preferred license before publishing to GitHub.
-acts for non-A2A-native runtimes
-5. Add per-peer or per-context routing strategies
-
----
-
-## Docs
-
-- `docs/INSTALL.md`
-- `docs/CONFIGURATION.md`
-- `docs/ARCHITECTURE.md`
-- `docs/SELF-TEST.md`
-
----
-
-## License
-
-Add your preferred license before publishing to GitHub.
-cs
-
-- `docs/INSTALL.md`
-- `docs/CONFIGURATION.md`
-- `docs/ARCHITECTURE.md`
-- `docs/SELF-TEST.md`
-
----
-
-## License
-
-Add your preferred license before publishing to GitHub.
+MIT. See `LICENSE`.

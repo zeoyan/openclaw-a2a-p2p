@@ -7,7 +7,7 @@ set -euo pipefail
 #   TS_AUTHKEY=tskey-...
 #
 # Optional env vars:
-#   OPENCLAW_CONFIG=/home/ec2-user/.openclaw/openclaw.json
+#   OPENCLAW_CONFIG=$HOME/.openclaw/openclaw.json
 #   A2A_PLUGIN_ID=a2a-p2p
 #   A2A_NAME="小爪"
 #   A2A_DESCRIPTION="OpenClaw A2A peer"
@@ -23,7 +23,7 @@ set -euo pipefail
 # If TS_AUTHKEY is omitted, the script installs Tailscale and prints the login URL,
 # but cannot finish tailnet enrollment unattended.
 
-OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-/home/ec2-user/.openclaw/openclaw.json}"
+OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-$HOME/.openclaw/openclaw.json}"
 A2A_PLUGIN_ID="${A2A_PLUGIN_ID:-a2a-p2p}"
 A2A_NAME="${A2A_NAME:-小爪}"
 A2A_DESCRIPTION="${A2A_DESCRIPTION:-OpenClaw A2A peer}"

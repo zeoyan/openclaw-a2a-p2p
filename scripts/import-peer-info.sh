@@ -9,7 +9,7 @@ fi
 PEER_INFO_FILE="$1"
 PEER_ID="${2:-}"
 PEER_NAME="${3:-}"
-OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-/home/ec2-user/.openclaw/openclaw.json}"
+OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-$HOME/.openclaw/openclaw.json}"
 PLUGIN_ID="${PLUGIN_ID:-a2a-p2p}"
 
 node - <<'NODE' "$OPENCLAW_CONFIG" "$PLUGIN_ID" "$PEER_INFO_FILE" "$PEER_ID" "$PEER_NAME"

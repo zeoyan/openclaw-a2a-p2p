@@ -22,6 +22,13 @@ The output includes:
 
 ## Import
 
+Preferred in-agent path:
+
+- use `a2a_build_peer_entry`
+- then merge the returned peer entry into local plugin config
+
+Shell path:
+
 ```bash
 ./scripts/import-peer-info.sh ./peer-info.json claw-brother "爪子哥"
 ```

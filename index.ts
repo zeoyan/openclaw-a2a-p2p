@@ -1,4 +1,5 @@
 import path from "node:path";
+import { execSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/core";
 
@@ -19,6 +20,8 @@ const plugin = {
     api.registerTool(createGetTaskTool({ taskStore }));
     api.registerTool(createCancelTaskTool({ taskStore }));
     api.registerTool(createRefreshPeerCardTool(cfg));
+    api.registerTool(createExportPeerInfoTool(cfg));
+    api.registerTool(createBuildPeerEntryTool());
 
     api.registerHttpRoute({
       path: `${cfg.server.basePath}/.well-known/agent-card.json`,
@@ -69,6 +72,8 @@ const plugin = {
         "Use a2a_list_peers to discover configured peers.",
         "Use a2a_send to send a message to another A2A agent.",
         "Use a2a_get_task / a2a_cancel_task for long-running remote tasks.",
+        "Use a2a_export_peer_info to output shareable peer information.",
+        "Use a2a_build_peer_entry to convert imported peer-info into a peer config entry.",
       ].join(" "),
     }));
   },
@@ -281,6 +286,56 @@ function createRefreshPeerCardTool(cfg: ResolvedConfig) {
   };
 }
 
+function createExportPeerInfoTool(cfg: ResolvedConfig) {
+  return {
+    name: "a2a_export_peer_info",
+    description: "Export shareable peer-info JSON for copy/paste or import on another agent.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        publicBaseUrl: { type: "string" },
+        preferPublic: { type: "boolean", default: true }
+      }
+    },
+    async execute(_toolCallId: string, params: any) {
+      return toolJson(buildPeerInfo(cfg, params));
+    },
+  };
+}
+
+function createBuildPeerEntryTool() {
+  return {
+    name: "a2a_build_peer_entry",
+    description: "Convert exported peer-info JSON into a peer config entry for the local plugin config.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      required: ["peerInfo"],
+      properties: {
+        peerInfo: {},
+        peerId: { type: "string" },
+        peerName: { type: "string" }
+      }
+    },
+    async execute(_toolCallId: string, params: any) {
+      const peerInfo = typeof params?.peerInfo === "string" ? JSON.parse(params.peerInfo) : params?.peerInfo;
+      const peerId = typeof params?.peerId === "string" && params.peerId.trim() ? params.peerId.trim() : slugify(peerInfo?.name || "peer");
+      const peerName = typeof params?.peerName === "string" && params.peerName.trim() ? params.peerName.trim() : String(peerInfo?.name || "Remote Peer");
+      return toolJson({
+        id: peerId,
+        name: peerName,
+        agentCardUrl: peerInfo?.agentCardUrl,
+        auth: {
+          type: "bearer",
+          token: peerInfo?.bearerToken || null,
+        },
+        labels: ["peer", "imported"],
+      });
+    },
+  };
+}
+
 async function handleJsonRpc({ api, cfg, taskStore, body }: { api: OpenClawPluginApi; cfg: ResolvedConfig; taskStore: TaskStore; body: any }) {
   const id = body?.id ?? null;
   const method = String(body?.method || "");
@@ -408,6 +463,64 @@ function extractTextFromUnknownMessage(message: any): string | undefined {
 
 function findPeer(cfg: ResolvedConfig, id?: string, name?: string) {
   return cfg.peers.find((peer) => peer.id === id || peer.name === name);
+}
+
+function buildPeerInfo(cfg: ResolvedConfig, params?: { publicBaseUrl?: string; preferPublic?: boolean }) {
+  const preferPublic = params?.preferPublic !== false;
+  const configuredJsonRpcUrl = cfg.agentCard.url || null;
+  let jsonRpcUrl = configuredJsonRpcUrl;
+  let agentCardUrl = configuredJsonRpcUrl ? String(configuredJsonRpcUrl).replace(/\/jsonrpc$/, "/.well-known/agent-card.json") : null;
+  const warnings: string[] = [];
+
+  if (params?.publicBaseUrl && params.publicBaseUrl.trim()) {
+    const base = params.publicBaseUrl.trim().replace(/\/$/, "");
+    jsonRpcUrl = `${base}${cfg.server.basePath}/jsonrpc`;
+    agentCardUrl = `${base}${cfg.server.basePath}/.well-known/agent-card.json`;
+  } else if (preferPublic && configuredJsonRpcUrl && configuredJsonRpcUrl.includes("127.0.0.1")) {
+    const discoveredIp = discoverPublicIp();
+    if (discoveredIp) {
+      jsonRpcUrl = configuredJsonRpcUrl.replace("127.0.0.1", discoveredIp);
+      agentCardUrl = String(jsonRpcUrl).replace(/\/jsonrpc$/, "/.well-known/agent-card.json");
+      warnings.push("jsonRpcUrl/agentCardUrl were rewritten from loopback to discovered public IP; ensure gateway.bind and firewall/security-group settings allow inbound access.");
+    } else {
+      warnings.push("public IP discovery failed; exported URLs remain loopback and are not shareable across machines.");
+    }
+  }
+
+  return {
+    kind: "openclaw-a2a-peer-info",
+    version: 1,
+    pluginId: "a2a-p2p",
+    name: cfg.agentCard.name,
+    description: cfg.agentCard.description,
+    agentCardUrl,
+    jsonRpcUrl,
+    bearerToken: cfg.security.token || null,
+    routingMode: cfg.routing.mode,
+    sessionKey: cfg.routing.sessionKey || null,
+    warnings,
+  };
+}
+
+function slugify(value: string) {
+  return String(value || "peer")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "peer";
+}
+
+function discoverPublicIp() {
+  const candidates = [
+    "https://checkip.amazonaws.com",
+    "https://ifconfig.me",
+  ];
+  for (const url of candidates) {
+    try {
+      const response = execSync(`curl -fsS ${url} 2>/dev/null`, { encoding: "utf8" }).trim();
+      if (response) return response;
+    } catch {}
+  }
+  return null;
 }
 
 function authorizeRequest(req: any, security: ResolvedConfig["security"]) {

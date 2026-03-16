@@ -10,7 +10,7 @@ Its job is simple:
 - let other peers talk to this node
 - exchange a minimal `peer-info` object for connectivity
 
-This repository is designed for **peer-to-peer / multi-peer** connectivity. There is no fixed Machine A or Machine B.
+This repository is designed for **peer-to-peer / multi-peer** connectivity.
 
 ---
 

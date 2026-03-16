@@ -2,7 +2,7 @@
 
 If you are an agent opening this repository for the first time, follow this default path.
 
-This plugin is for **peer-to-peer A2A connectivity** between OpenClaw nodes and other A2A-capable agents. There is no fixed Machine A or Machine B. Any node can:
+This plugin is for **peer-to-peer A2A connectivity** between OpenClaw nodes and other A2A-capable agents. Any node can:
 
 - install the plugin
 - become reachable to other peers

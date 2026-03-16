@@ -31,12 +31,12 @@ Not exported in basic mode:
 
 ## Exchange flow
 
-1. Node A exports a shareable `peer-info.json`
-2. Node B imports it into local plugin config
-3. Node B exports its own `peer-info.json`
-4. Node A imports that in reverse
+1. A node exports a shareable `peer-info.json`
+2. Another installed peer imports it into local plugin config
+3. That peer can export its own `peer-info.json` in return
+4. Each side repeats the same import flow for any additional peers
 
-After this, both peers know how to discover and authenticate to each other.
+After this, peers know how to discover and authenticate to each other.
 
 ## Export
 

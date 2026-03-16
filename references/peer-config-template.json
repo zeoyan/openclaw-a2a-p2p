@@ -1,0 +1,11 @@
+{
+  "id": "claw-brother",
+  "name": "爪子哥",
+  "agentCardUrl": "https://peer-host.example/a2a/.well-known/agent-card.json",
+  "description": "Remote A2A peer",
+  "labels": ["openclaw", "peer"],
+  "auth": {
+    "type": "bearer",
+    "token": "REPLACE_WITH_PEER_TOKEN"
+  }
+}

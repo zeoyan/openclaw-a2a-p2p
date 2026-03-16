@@ -1,0 +1,52 @@
+{
+  "plugins": {
+    "entries": {
+      "a2a-p2p": {
+        "enabled": true,
+        "config": {
+          "server": {
+            "basePath": "/a2a",
+            "allowRemote": true
+          },
+          "agentCard": {
+            "name": "小爪",
+            "description": "OpenClaw A2A peer",
+            "url": "http://HOST:PORT/a2a/jsonrpc",
+            "provider": "OpenClaw",
+            "streaming": true,
+            "pushNotifications": false,
+            "skills": [
+              {
+                "id": "chat",
+                "name": "chat",
+                "description": "General-purpose text chat routed into OpenClaw"
+              }
+            ]
+          },
+          "routing": {
+            "sessionKey": "a2a-peer-inbox",
+            "mode": "subagent",
+            "waitTimeoutMs": 15000
+          },
+          "security": {
+            "inboundAuth": "bearer",
+            "token": "REPLACE_WITH_LOCAL_INBOUND_TOKEN",
+            "maxBodyBytes": 262144
+          },
+          "peers": [
+            {
+              "id": "peer-1",
+              "name": "Remote Peer",
+              "agentCardUrl": "http://PEER_HOST:PEER_PORT/a2a/.well-known/agent-card.json",
+              "auth": {
+                "type": "bearer",
+                "token": "REPLACE_WITH_PEER_INBOUND_TOKEN"
+              },
+              "labels": ["peer"]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

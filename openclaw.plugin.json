@@ -1,0 +1,103 @@
+{
+  "id": "a2a-p2p",
+  "name": "A2A P2P",
+  "description": "A2A v1.0 peer-to-peer gateway for OpenClaw with peer registry, Agent Card, JSON-RPC endpoint, local task store, and setup/ops/troubleshooting skills.",
+  "skills": ["./skills"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "server": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "basePath": { "type": "string", "default": "/a2a" },
+          "allowRemote": { "type": "boolean", "default": false }
+        }
+      },
+      "agentCard": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "default": "OpenClaw A2A Agent" },
+          "description": { "type": "string", "default": "A2A-enabled OpenClaw agent" },
+          "version": { "type": "string", "default": "1.0.0" },
+          "url": { "type": "string" },
+          "provider": { "type": "string", "default": "OpenClaw" },
+          "streaming": { "type": "boolean", "default": true },
+          "pushNotifications": { "type": "boolean", "default": false },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "description": { "type": "string" }
+              },
+              "required": ["id", "name"]
+            },
+            "default": [
+              {
+                "id": "chat",
+                "name": "chat",
+                "description": "General-purpose text chat routed into OpenClaw"
+              }
+            ]
+          }
+        }
+      },
+      "routing": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sessionKey": { "type": "string" },
+          "mode": {
+            "type": "string",
+            "enum": ["subagent", "system-event"],
+            "default": "subagent"
+          },
+          "waitTimeoutMs": { "type": "number", "minimum": 0, "default": 30000 }
+        }
+      },
+      "security": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "inboundAuth": {
+            "type": "string",
+            "enum": ["none", "bearer"],
+            "default": "bearer"
+          },
+          "token": { "type": "string" },
+          "maxBodyBytes": { "type": "number", "minimum": 1024, "default": 262144 }
+        }
+      },
+      "peers": {
+        "type": "array",
+        "default": [],
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "agentCardUrl": { "type": "string" },
+            "description": { "type": "string" },
+            "labels": { "type": "array", "items": { "type": "string" }, "default": [] },
+            "auth": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": { "type": "string", "enum": ["none", "bearer"], "default": "none" },
+                "token": { "type": "string" }
+              }
+            }
+          },
+          "required": ["id", "name", "agentCardUrl"]
+        }
+      }
+    }
+  }
+}

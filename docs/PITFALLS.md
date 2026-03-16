@@ -44,5 +44,31 @@ Check:
 
 - the repo includes docs and config examples
 - the operator actually copied the plugin config into OpenClaw
+- `server.allowRemote=true` if remote access is intended
+- `agentCard.url` is not `127.0.0.1` or `localhost`
+- OpenClaw `gateway.bind` is not loopback-only for the intended network path
 - the peer is reachable over the network
 - a dedicated routing session is configured
+
+## 6. `server.allowRemote=true` but remote peers still cannot connect
+
+Likely cause:
+
+- OpenClaw gateway is still bound to loopback only
+- reverse proxy / Tailscale / private network path is not actually reachable
+
+Important:
+
+- plugin remote allow and gateway network reachability are separate requirements
+- setting `allowRemote=true` does not expose the node by itself
+
+## 7. `agentCard.url` uses `127.0.0.1` or `localhost`
+
+Likely cause:
+
+- operator copied a local test URL into a real peer config
+
+Fix:
+
+- replace it with a host or domain the peer machine can reach
+- then verify the Agent Card from another machine

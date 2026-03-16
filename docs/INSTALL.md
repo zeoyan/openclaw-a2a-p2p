@@ -9,6 +9,30 @@ If you are opening this repository for the first time, read `START-HERE.md` firs
 - a reachable network path between peers
 - a plan for bearer tokens and routing sessions
 
+## Important: install success is not the same as remote reachability
+
+You can install and load this plugin successfully while the node is still **local-only**.
+
+That usually happens when:
+
+- `server.allowRemote = false`
+- `agentCard.url` uses `127.0.0.1` or `localhost`
+- OpenClaw `gateway.bind = loopback`
+
+If another machine is supposed to call this node, fix those before claiming setup is complete.
+
+## Before claiming remote readiness
+
+Run the remote-mode preflight against the OpenClaw config:
+
+```bash
+./scripts/preflight-remote.sh ~/.openclaw/openclaw.json
+```
+
+Then review:
+
+- `docs/AI-AGENT-OPERATOR-CHECKLIST.md`
+
 ## Install from a local folder
 
 ```bash
@@ -52,4 +76,6 @@ Check:
 1. gateway was restarted
 2. plugin config exists under `plugins.entries.a2a-p2p.config`
 3. `agentCard.url` points at the JSON-RPC endpoint
-4. the node can actually bind and serve the gateway
+4. `server.allowRemote=true` if remote access is intended
+5. OpenClaw `gateway.bind` is not loopback-only for the intended peer path
+6. the node can actually bind and serve the gateway

@@ -25,6 +25,8 @@ Then read:
 1. `docs/INSTALL.md`
 2. `docs/CONFIGURATION.md`
 3. `docs/PEER-INFO.md`
+4. `docs/AI-AGENT-OPERATOR-CHECKLIST.md`
+5. `docs/OPENCLAW-TO-OPENCLAW.md`
 
 Only read `docs/PITFALLS.md` if something fails.
 
@@ -33,10 +35,13 @@ Only read `docs/PITFALLS.md` if something fails.
 ## Default path
 
 1. Install this repository as an OpenClaw plugin
-2. Configure this node's reachable `agentCard.url`, inbound bearer token, and dedicated `routing.sessionKey`
-3. Export this node's minimal `peer-info.json`
-4. Import another peer's `peer-info.json`
-5. Restart and verify connectivity
+2. Decide whether the goal is local loopback testing or real cross-machine connectivity
+3. Configure this node's reachable `agentCard.url`, inbound bearer token, and dedicated `routing.sessionKey`
+4. Export this node's minimal `peer-info.json`
+5. Import another peer's `peer-info.json`
+6. Restart and verify connectivity
+
+If the goal is communication with another machine, do **not** leave the node in loopback mode.
 
 ---
 
@@ -84,6 +89,26 @@ For more detail:
 - peer operations tools
 - examples and docs for install/configuration/peer exchange
 - helper scripts for export/import/bootstrap
+- remote-mode preflight checks and operator guidance
+
+---
+
+## Quick operator notes
+
+If the goal is real cross-machine communication, all of these must be true:
+
+- `server.allowRemote = true`
+- `agentCard.url` does **not** use `127.0.0.1` or `localhost`
+- OpenClaw gateway is not loopback-only for the intended peer path
+- the peer can actually reach the machine over the network
+
+Before claiming remote readiness, use:
+
+```bash
+./scripts/preflight-remote.sh ~/.openclaw/openclaw.json
+```
+
+Then verify from another machine, not only from localhost.
 
 ---
 
@@ -114,6 +139,8 @@ Important findings:
 
 - plugin HTTP route auth must be `plugin` or `gateway`; `none` leads to `404`
 - `routing.sessionKey` should be a dedicated routing session, not a busy human chat session
+- `127.0.0.1` / `localhost` in `agentCard.url` means local-only testing, not cross-machine peer connectivity
+- `server.allowRemote=true` is not enough by itself; OpenClaw gateway exposure must also be reachable from the peer path
 
 ---
 
@@ -123,6 +150,8 @@ Important findings:
 - `docs/INSTALL.md`
 - `docs/CONFIGURATION.md`
 - `docs/PEER-INFO.md`
+- `docs/AI-AGENT-OPERATOR-CHECKLIST.md`
+- `docs/OPENCLAW-TO-OPENCLAW.md`
 - `docs/PITFALLS.md`
 - `docs/ARCHITECTURE.md`
 - `docs/TAILSCALE.md`

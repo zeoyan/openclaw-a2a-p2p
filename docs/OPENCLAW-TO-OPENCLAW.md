@@ -28,6 +28,18 @@ openclaw gateway restart
 openclaw plugins info a2a-p2p
 ```
 
+Before continuing, confirm both nodes are intended to be remotely reachable:
+
+- `server.allowRemote = true`
+- `agentCard.url` does not use `127.0.0.1` or `localhost`
+- OpenClaw gateway is not loopback-only for the intended peer path
+
+Recommended pre-check on each node:
+
+```bash
+./scripts/preflight-remote.sh ~/.openclaw/openclaw.json
+```
+
 ## Configure Node A
 
 - `agentCard.name = 小爪`

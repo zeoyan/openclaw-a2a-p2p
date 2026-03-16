@@ -10,8 +10,8 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "basePath": { "type": "string", "default": "/a2a" },
-          "allowRemote": { "type": "boolean", "default": false }
+          "basePath": { "type": "string", "default": "/a2a", "description": "HTTP base path for the Agent Card and JSON-RPC routes." },
+          "allowRemote": { "type": "boolean", "default": false, "description": "Allows non-loopback clients to call the plugin routes. This does not expose the node by itself; the OpenClaw gateway and network path must also be reachable." }
         }
       },
       "agentCard": {
@@ -21,7 +21,7 @@
           "name": { "type": "string", "default": "OpenClaw A2A Agent" },
           "description": { "type": "string", "default": "A2A-enabled OpenClaw agent" },
           "version": { "type": "string", "default": "1.0.0" },
-          "url": { "type": "string" },
+          "url": { "type": "string", "description": "This node's own JSON-RPC endpoint, usually http(s)://HOST:PORT/a2a/jsonrpc. For cross-machine use, do not set this to 127.0.0.1 or localhost." },
           "provider": { "type": "string", "default": "OpenClaw" },
           "streaming": { "type": "boolean", "default": true },
           "pushNotifications": { "type": "boolean", "default": false },
@@ -51,7 +51,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "sessionKey": { "type": "string" },
+          "sessionKey": { "type": "string", "description": "Dedicated OpenClaw session for inbound A2A routing. Do not reuse a busy human chat session." },
           "mode": {
             "type": "string",
             "enum": ["subagent", "system-event"],
@@ -82,7 +82,7 @@
           "properties": {
             "id": { "type": "string" },
             "name": { "type": "string" },
-            "agentCardUrl": { "type": "string" },
+            "agentCardUrl": { "type": "string", "description": "Remote peer Agent Card URL, usually http(s)://PEER_HOST:PORT/a2a/.well-known/agent-card.json." },
             "description": { "type": "string" },
             "labels": { "type": "array", "items": { "type": "string" }, "default": [] },
             "auth": {

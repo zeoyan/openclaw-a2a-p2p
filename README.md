@@ -211,6 +211,7 @@ Another OpenClaw instance can install this repository and communicate with this 
 - `docs/CONFIGURATION.md`
 - `docs/ARCHITECTURE.md`
 - `docs/SELF-TEST.md`
+- `docs/PEER-INFO.md`
 - `docs/TAILSCALE.md`
 
 ---
@@ -224,6 +225,18 @@ acts for non-A2A-native runtimes
 ---
 
 ## Docs
+
+- `docs/INSTALL.md`
+- `docs/CONFIGURATION.md`
+- `docs/ARCHITECTURE.md`
+- `docs/SELF-TEST.md`
+
+---
+
+## License
+
+Add your preferred license before publishing to GitHub.
+cs
 
 - `docs/INSTALL.md`
 - `docs/CONFIGURATION.md`

@@ -33,6 +33,16 @@ Expected result:
 - status: `loaded`
 - tools visible in plugin info
 
+## Agent-friendly automated path
+
+If you want to automate the host bootstrap for Tailscale-based connectivity, use:
+
+```bash
+TS_AUTHKEY=tskey-... ./scripts/bootstrap-tailnet.sh
+```
+
+Without `TS_AUTHKEY`, the script can still install Tailscale and print a login URL, but a human must complete the tailnet login.
+
 ## If install succeeds but routes still fail
 
 Check:

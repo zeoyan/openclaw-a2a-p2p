@@ -47,10 +47,12 @@ PEER_BEARER_TOKEN="REPLACE_WITH_PEER_TOKEN" \
 
 ## Output
 
-The script prints:
+The script prints a minimal `peer-info` JSON object containing:
 
+- `kind`
+- `version`
+- `name`
 - `agentCardUrl`
-- `jsonRpcUrl`
 - generated `bearerToken`
 
-Use those values on the remote peer.
+Use that peer-info on the remote peer.

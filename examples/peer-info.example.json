@@ -1,12 +1,7 @@
 {
   "kind": "openclaw-a2a-peer-info",
   "version": 1,
-  "pluginId": "a2a-p2p",
   "name": "小爪",
-  "description": "OpenClaw A2A peer",
   "agentCardUrl": "https://example.com/a2a/.well-known/agent-card.json",
-  "jsonRpcUrl": "https://example.com/a2a/jsonrpc",
-  "bearerToken": "replace-with-real-token",
-  "routingMode": "subagent",
-  "sessionKey": "a2a-peer-inbox"
+  "bearerToken": "replace-with-real-token"
 }

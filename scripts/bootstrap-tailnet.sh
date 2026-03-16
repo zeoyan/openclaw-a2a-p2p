@@ -156,8 +156,10 @@ try {
 cfg.peers = peers;
 fs.writeFileSync(configPath, JSON.stringify(j, null, 2));
 console.log(JSON.stringify({
+  kind: 'openclaw-a2a-peer-info',
+  version: 1,
+  name,
   agentCardUrl: `http://${tailAddr}${basePath}/.well-known/agent-card.json`,
-  jsonRpcUrl: `http://${tailAddr}${basePath}/jsonrpc`,
   bearerToken
 }, null, 2));
 NODE
@@ -179,7 +181,7 @@ main() {
   restart_gateway
   echo
   echo "Bootstrap complete."
-  echo "Use the printed agentCardUrl/jsonRpcUrl/bearerToken values on the remote peer."
+  echo "Use the printed peer-info JSON on the remote peer."
 }
 
 main "$@"

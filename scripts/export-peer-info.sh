@@ -31,37 +31,25 @@ function discoverPublicIp() {
 
 const configuredJsonRpcUrl = cfg.agentCard?.url || null;
 const basePath = cfg.server?.basePath || '/a2a';
-let jsonRpcUrl = configuredJsonRpcUrl;
 let agentCardUrl = configuredJsonRpcUrl ? String(configuredJsonRpcUrl).replace(/\/jsonrpc$/, '/.well-known/agent-card.json') : null;
-const warnings = [];
 
 if (publicBaseUrl) {
   const base = publicBaseUrl.replace(/\/$/, '');
-  jsonRpcUrl = `${base}${basePath}/jsonrpc`;
   agentCardUrl = `${base}${basePath}/.well-known/agent-card.json`;
 } else if (preferPublic && typeof configuredJsonRpcUrl === 'string' && configuredJsonRpcUrl.includes('127.0.0.1')) {
   const discoveredIp = discoverPublicIp();
   if (discoveredIp) {
-    jsonRpcUrl = configuredJsonRpcUrl.replace('127.0.0.1', discoveredIp);
-    agentCardUrl = String(jsonRpcUrl).replace(/\/jsonrpc$/, '/.well-known/agent-card.json');
-    warnings.push('jsonRpcUrl/agentCardUrl were rewritten from loopback to discovered public IP; ensure gateway.bind and firewall/security-group settings allow inbound access.');
-  } else {
-    warnings.push('public IP discovery failed; exported URLs remain loopback and are not shareable across machines.');
+    const publicJsonRpcUrl = configuredJsonRpcUrl.replace('127.0.0.1', discoveredIp);
+    agentCardUrl = String(publicJsonRpcUrl).replace(/\/jsonrpc$/, '/.well-known/agent-card.json');
   }
 }
 
 const out = {
   kind: 'openclaw-a2a-peer-info',
   version: 1,
-  pluginId,
   name: cfg.agentCard?.name || 'OpenClaw A2A peer',
-  description: cfg.agentCard?.description || 'OpenClaw A2A peer',
   agentCardUrl,
-  jsonRpcUrl,
-  bearerToken: cfg.security?.token || null,
-  routingMode: cfg.routing?.mode || 'subagent',
-  sessionKey: cfg.routing?.sessionKey || null,
-  warnings
+  bearerToken: cfg.security?.token || null
 };
 console.log(JSON.stringify(out, null, 2));
 NODE

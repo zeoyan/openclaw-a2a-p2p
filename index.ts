@@ -468,37 +468,25 @@ function findPeer(cfg: ResolvedConfig, id?: string, name?: string) {
 function buildPeerInfo(cfg: ResolvedConfig, params?: { publicBaseUrl?: string; preferPublic?: boolean }) {
   const preferPublic = params?.preferPublic !== false;
   const configuredJsonRpcUrl = cfg.agentCard.url || null;
-  let jsonRpcUrl = configuredJsonRpcUrl;
   let agentCardUrl = configuredJsonRpcUrl ? String(configuredJsonRpcUrl).replace(/\/jsonrpc$/, "/.well-known/agent-card.json") : null;
-  const warnings: string[] = [];
 
   if (params?.publicBaseUrl && params.publicBaseUrl.trim()) {
     const base = params.publicBaseUrl.trim().replace(/\/$/, "");
-    jsonRpcUrl = `${base}${cfg.server.basePath}/jsonrpc`;
     agentCardUrl = `${base}${cfg.server.basePath}/.well-known/agent-card.json`;
   } else if (preferPublic && configuredJsonRpcUrl && configuredJsonRpcUrl.includes("127.0.0.1")) {
     const discoveredIp = discoverPublicIp();
     if (discoveredIp) {
-      jsonRpcUrl = configuredJsonRpcUrl.replace("127.0.0.1", discoveredIp);
-      agentCardUrl = String(jsonRpcUrl).replace(/\/jsonrpc$/, "/.well-known/agent-card.json");
-      warnings.push("jsonRpcUrl/agentCardUrl were rewritten from loopback to discovered public IP; ensure gateway.bind and firewall/security-group settings allow inbound access.");
-    } else {
-      warnings.push("public IP discovery failed; exported URLs remain loopback and are not shareable across machines.");
+      const publicJsonRpcUrl = configuredJsonRpcUrl.replace("127.0.0.1", discoveredIp);
+      agentCardUrl = String(publicJsonRpcUrl).replace(/\/jsonrpc$/, "/.well-known/agent-card.json");
     }
   }
 
   return {
     kind: "openclaw-a2a-peer-info",
     version: 1,
-    pluginId: "a2a-p2p",
     name: cfg.agentCard.name,
-    description: cfg.agentCard.description,
     agentCardUrl,
-    jsonRpcUrl,
     bearerToken: cfg.security.token || null,
-    routingMode: cfg.routing.mode,
-    sessionKey: cfg.routing.sessionKey || null,
-    warnings,
   };
 }
 

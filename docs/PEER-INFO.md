@@ -1,24 +1,48 @@
 # Peer information exchange
 
-This repository supports a simple information-exchange model:
+This repository uses a **minimal peer-info format** for basic connectivity.
 
-1. Node A exports a shareable peer-info JSON document
-2. Node B reads that JSON and imports it into its plugin config
-3. Node B does the same in reverse
-4. Both peers now know each other's Agent Card URL and bearer token
+The goal is not to export every local detail. The goal is to export only the information another installed `a2a-p2p` node needs in order to connect.
+
+## Minimal peer-info fields
+
+Recommended basic format:
+
+- `kind`
+- `version`
+- `name`
+- `agentCardUrl`
+- `bearerToken`
+
+Why these fields:
+
+- `agentCardUrl` is the remote discovery entrypoint
+- `bearerToken` is needed for this plugin's default inbound auth model
+- `name` gives the importing side a stable human-readable peer identity
+- `kind` and `version` keep the exchange format machine-readable and evolvable
+
+Not exported in basic mode:
+
+- `jsonRpcUrl`
+- `description`
+- `routingMode`
+- `sessionKey`
+- other local implementation details
+
+## Exchange flow
+
+1. Node A exports a shareable `peer-info.json`
+2. Node B imports it into local plugin config
+3. Node B exports its own `peer-info.json`
+4. Node A imports that in reverse
+
+After this, both peers know how to discover and authenticate to each other.
 
 ## Export
 
 ```bash
 ./scripts/export-peer-info.sh > peer-info.json
 ```
-
-The output includes:
-
-- `agentCardUrl`
-- `jsonRpcUrl`
-- `bearerToken`
-- node identity fields
 
 ## Import
 

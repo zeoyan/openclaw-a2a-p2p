@@ -13,8 +13,7 @@ The current implementation is designed to give Joey哥 a **reusable installable 
 - outbound peer send tool
 - local task store
 - inbound request handling routed via `routing.sessionKey`
-- setup/ops/troubleshooting skills
-- install helper script
+- install/export/import helper scripts
 
 ## What remains for full protocol maturity
 

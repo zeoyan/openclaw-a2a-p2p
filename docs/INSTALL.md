@@ -1,5 +1,7 @@
 # Installation
 
+If you are opening this repository for the first time, read `START-HERE.md` first.
+
 ## Requirements
 
 - OpenClaw installed

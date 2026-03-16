@@ -1,8 +1,7 @@
 {
   "id": "a2a-p2p",
   "name": "A2A P2P",
-  "description": "A2A v1.0 peer-to-peer gateway for OpenClaw with peer registry, Agent Card, JSON-RPC endpoint, local task store, and setup/ops/troubleshooting skills.",
-  "skills": ["./skills"],
+  "description": "A2A v1.0 peer-to-peer gateway for OpenClaw with peer registry, Agent Card, JSON-RPC endpoint, and local task store.",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,

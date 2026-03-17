@@ -1,89 +1,49 @@
 # START-HERE
 
-If you are an AI agent or operator opening this repository for the first time, read this file before touching config.
+If you are an AI agent or operator opening this repository for the first time, follow this order:
 
-This plugin is for **peer-to-peer A2A connectivity** between OpenClaw nodes and other A2A-capable agents. A node can:
-
-- install the plugin
-- become reachable to other peers
-- export a minimal `peer-info.json`
-- import another peer's `peer-info.json`
-
-## The pitfall most people hit
-
-This plugin supports real cross-machine communication, but it is easy to accidentally leave it in **local-only / loopback mode**.
-
-That happens when any of these are true:
-
-- `plugins.entries.a2a-p2p.config.server.allowRemote = false`
-- `plugins.entries.a2a-p2p.config.agentCard.url` uses `127.0.0.1` or `localhost`
-- OpenClaw `gateway.bind = loopback`
-- the machine is not reachable from the peer network
-
-If another machine is supposed to call this node, all four must be checked.
-
----
-
-## Decide which mode you are setting up
-
-### Mode A: local loopback test only
-Use this only for same-host testing.
-
-Signs you are in local-only mode:
-
-- `agentCard.url = http://127.0.0.1:...`
-- `agentCard.url = http://localhost:...`
-- `server.allowRemote = false`
-- `gateway.bind = loopback`
-
-This mode is fine for self-test, but **another machine cannot use it**.
-
-### Mode B: real peer-to-peer / remote mode
-Use this for OpenClaw-to-OpenClaw communication across machines.
-
-Required:
-
-1. `server.allowRemote = true`
-2. `agentCard.url = http(s)://<reachable-host-or-domain>/a2a/jsonrpc`
-3. `gateway.bind` must allow inbound traffic from the peer path (direct bind, reverse proxy, or private network such as Tailscale)
-4. peer network reachability must actually exist
-5. bearer tokens must match
-6. `routing.sessionKey` must be dedicated to A2A traffic
-
----
-
-## Minimum remote-mode checklist
-
-Before claiming setup is complete, verify all of this:
-
-- [ ] plugin installed and loaded
-- [ ] gateway restarted after config change
-- [ ] `server.allowRemote = true`
-- [ ] `agentCard.url` does **not** use `127.0.0.1` or `localhost`
-- [ ] OpenClaw gateway is not loopback-only for the intended network path
-- [ ] `routing.sessionKey` is dedicated
-- [ ] inbound bearer token is set
-- [ ] Agent Card endpoint returns `200` from another machine
-- [ ] JSON-RPC endpoint returns `200` from another machine
-
-If you cannot verify from another machine, do **not** claim the node is remotely reachable yet.
-
----
-
-## Default path
-
-1. Install this repository as an OpenClaw plugin.
-2. Configure this node's own reachable `agentCard.url`, inbound bearer token, and dedicated `routing.sessionKey`.
-3. Export this node's minimal `peer-info.json`.
-4. Import another peer's `peer-info.json` into local config.
-5. Restart the gateway and verify connectivity.
-
-## Read these files in this order
+## Main path
 
 1. `README.md`
 2. `docs/INSTALL.md`
-3. `docs/CONFIGURATION.md`
-4. `docs/PEER-INFO.md`
-5. `docs/AI-AGENT-OPERATOR-CHECKLIST.md`
-6. `docs/OPENCLAW-TO-OPENCLAW.md`
-7. `docs/PITFALLS.md` only if something fails
+3. `docs/PEER-INFO.md`
+
+That is the default workflow.
+
+The intended UX is:
+
+1. install + init this node
+2. output this node's peer info
+3. later import another node's peer info when needed
+4. start talking
+
+## Do not overcomplicate first-run setup
+
+Do **not** start with advanced deployment branches unless the main path fails.
+
+For most first runs, the important question is simply:
+
+- can this node initialize itself cleanly?
+- can it export its own peer info?
+- can it later import another peer's peer info?
+
+## Only if something fails
+
+Then move to fallback / advanced material:
+
+- `docs/AGENT-RECOVERY.md`
+- `docs/PITFALLS.md`
+- `docs/CONFIGURATION.md`
+- `docs/TAILSCALE.md`
+- `docs/ARCHITECTURE.md`
+
+## Still true even with the simpler UX
+
+Remote communication still requires all of these:
+
+- `server.allowRemote = true`
+- `agentCard.url` is reachable from the peer
+- `gateway.bind` is not loopback-only for the intended path
+- the real network path exists
+
+A clean install is **not** the same as real remote reachability.

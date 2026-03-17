@@ -1,74 +1,49 @@
 # Common pitfalls
 
+This file is fallback-only.
+Use it only when the main flow fails.
+
 ## 1. Agent Card returns 404
 
-Likely causes:
+Usually means one of these:
 
 - gateway was not restarted
-- plugin route registration failed
 - wrong base path
+- plugin route registration failed
 
 Important implementation note:
 
-- OpenClaw plugin HTTP routes must use route auth `plugin` or `gateway`
-- using `none` causes route registration failure and 404 responses
+- OpenClaw plugin HTTP routes must use auth `plugin` or `gateway`
+- using `none` breaks route registration
 
 ## 2. `message/send` replies with stale content
 
-Likely cause:
+Usually means:
 
-- `routing.sessionKey` points at an already-busy human chat session
+- `routing.sessionKey` points at a busy human chat session
 
 Fix:
 
-- use a dedicated routing session for A2A traffic
+- use a dedicated A2A routing session
 
-## 3. `agentCard.url` and `peers[].agentCardUrl` mixed up
+## 3. Wrong URL in the wrong place
 
-Correct:
+Correct split:
 
-- `agentCard.url` -> `/a2a/jsonrpc`
-- `peers[].agentCardUrl` -> `/.well-known/agent-card.json`
+- `agentCard.url` → `/a2a/jsonrpc`
+- `peers[].agentCardUrl` → `/.well-known/agent-card.json`
 
 ## 4. 401 unauthorized
 
-Likely causes:
-
-- wrong bearer token
-- missing `Authorization: Bearer ...`
-- peer token mismatch
-
-## 5. Plugin installs but another agent still cannot use it
-
 Check:
 
-- the repo includes docs and config examples
-- the operator actually copied the plugin config into OpenClaw
-- `server.allowRemote=true` if remote access is intended
-- `agentCard.url` is not `127.0.0.1` or `localhost`
-- OpenClaw `gateway.bind` is not loopback-only for the intended network path
-- the peer is reachable over the network
-- a dedicated routing session is configured
+- bearer token matches
+- request includes `Authorization: Bearer ...`
 
-## 6. `server.allowRemote=true` but remote peers still cannot connect
+## 5. Remote peers still cannot connect
 
-Likely cause:
+Even if plugin config looks correct, check:
 
-- OpenClaw gateway is still bound to loopback only
-- reverse proxy / Tailscale / private network path is not actually reachable
-
-Important:
-
-- plugin remote allow and gateway network reachability are separate requirements
-- setting `allowRemote=true` does not expose the node by itself
-
-## 7. `agentCard.url` uses `127.0.0.1` or `localhost`
-
-Likely cause:
-
-- operator copied a local test URL into a real peer config
-
-Fix:
-
-- replace it with a host or domain the peer machine can reach
-- then verify the Agent Card from another machine
+- `agentCard.url` is not `127.0.0.1` / `localhost`
+- `gateway.bind` is not loopback-only
+- cloud firewall / host firewall / network path is actually open

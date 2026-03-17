@@ -22,6 +22,8 @@ const plugin = {
     api.registerTool(createRefreshPeerCardTool(cfg));
     api.registerTool(createExportPeerInfoTool(cfg));
     api.registerTool(createBuildPeerEntryTool());
+    api.registerTool(createImportPeerInfoTool(cfg));
+    api.registerTool(createRemovePeerTool(cfg));
 
     api.registerHttpRoute({
       path: `${cfg.server.basePath}/.well-known/agent-card.json`,
@@ -74,6 +76,8 @@ const plugin = {
         "Use a2a_get_task / a2a_cancel_task for long-running remote tasks.",
         "Use a2a_export_peer_info to output shareable peer information.",
         "Use a2a_build_peer_entry to convert imported peer-info into a peer config entry.",
+        "Use a2a_import_peer_info to add or update a peer from pasted peer-info JSON.",
+        "Use a2a_remove_peer to remove a peer by id, name, or agentCardUrl.",
       ].join(" "),
     }));
   },
@@ -319,19 +323,73 @@ function createBuildPeerEntryTool() {
       }
     },
     async execute(_toolCallId: string, params: any) {
-      const peerInfo = typeof params?.peerInfo === "string" ? JSON.parse(params.peerInfo) : params?.peerInfo;
-      const peerId = typeof params?.peerId === "string" && params.peerId.trim() ? params.peerId.trim() : slugify(peerInfo?.name || "peer");
-      const peerName = typeof params?.peerName === "string" && params.peerName.trim() ? params.peerName.trim() : String(peerInfo?.name || "Remote Peer");
+      const peerInfo = parsePeerInfo(params?.peerInfo);
+      return toolJson(buildPeerEntry({ peerInfo, peerId: params?.peerId, peerName: params?.peerName }));
+    },
+  };
+}
+
+function createImportPeerInfoTool(cfg: ResolvedConfig) {
+  return {
+    name: "a2a_import_peer_info",
+    description: "Add or update a peer from pasted/exported peer-info JSON and persist it into local plugin config.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      required: ["peerInfo"],
+      properties: {
+        peerInfo: {},
+        peerId: { type: "string" },
+        peerName: { type: "string" },
+        testReachability: { type: "boolean", default: true }
+      }
+    },
+    async execute(_toolCallId: string, params: any) {
+      const peerInfo = parsePeerInfo(params?.peerInfo);
+      const entry = buildPeerEntry({ peerInfo, peerId: params?.peerId, peerName: params?.peerName });
+      upsertPeer(cfg, entry);
+      await persistPeersToLocalConfig(cfg.peers);
+
+      let verification: any = null;
+      if (params?.testReachability !== false) {
+        try {
+          const card = await fetchJson(entry.agentCardUrl, entry.auth);
+          verification = { ok: true, agentCardUrl: entry.agentCardUrl, card };
+        } catch (err) {
+          verification = { ok: false, agentCardUrl: entry.agentCardUrl, error: String(err) };
+        }
+      }
+
       return toolJson({
-        id: peerId,
-        name: peerName,
-        agentCardUrl: peerInfo?.agentCardUrl,
-        auth: {
-          type: "bearer",
-          token: peerInfo?.bearerToken || null,
-        },
-        labels: ["peer", "imported"],
+        ok: true,
+        peer: entry,
+        verification,
+        note: "Peer added or updated in local plugin config.",
       });
+    },
+  };
+}
+
+function createRemovePeerTool(cfg: ResolvedConfig) {
+  return {
+    name: "a2a_remove_peer",
+    description: "Remove a peer from local config by id, name, or agentCardUrl.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        agentCardUrl: { type: "string" }
+      }
+    },
+    async execute(_toolCallId: string, params: any) {
+      const before = cfg.peers.length;
+      cfg.peers = cfg.peers.filter((peer) => !matchesPeer(peer, params));
+      const removed = before - cfg.peers.length;
+      if (removed <= 0) throw new Error("peer not found");
+      await persistPeersToLocalConfig(cfg.peers);
+      return toolJson({ ok: true, removed, peers: cfg.peers });
     },
   };
 }
@@ -488,6 +546,60 @@ function buildPeerInfo(cfg: ResolvedConfig, params?: { publicBaseUrl?: string; p
     agentCardUrl,
     bearerToken: cfg.security.token || null,
   };
+}
+
+function parsePeerInfo(input: any) {
+  const peerInfo = typeof input === "string" ? JSON.parse(input) : input;
+  if (!peerInfo || typeof peerInfo !== "object") throw new Error("peerInfo must be an object or JSON string");
+  if (peerInfo.kind !== "openclaw-a2a-peer-info") throw new Error(`unsupported peer-info kind: ${String(peerInfo.kind || "")}`);
+  if (!peerInfo.agentCardUrl || typeof peerInfo.agentCardUrl !== "string") throw new Error("peerInfo.agentCardUrl is required");
+  return peerInfo;
+}
+
+function buildPeerEntry(params: { peerInfo: any; peerId?: string; peerName?: string }) {
+  const peerId = typeof params.peerId === "string" && params.peerId.trim() ? params.peerId.trim() : slugify(params.peerInfo?.name || "peer");
+  const peerName = typeof params.peerName === "string" && params.peerName.trim() ? params.peerName.trim() : String(params.peerInfo?.name || "Remote Peer");
+  return {
+    id: peerId,
+    name: peerName,
+    agentCardUrl: String(params.peerInfo?.agentCardUrl),
+    auth: {
+      type: "bearer",
+      token: params.peerInfo?.bearerToken || null,
+    },
+    labels: ["peer", "imported"],
+  };
+}
+
+function upsertPeer(cfg: ResolvedConfig, entry: any) {
+  const idx = cfg.peers.findIndex((peer) => peer && (peer.id === entry.id || peer.name === entry.name || peer.agentCardUrl === entry.agentCardUrl));
+  if (idx >= 0) cfg.peers[idx] = entry;
+  else cfg.peers.push(entry);
+}
+
+async function persistPeersToLocalConfig(peersInput: any[]) {
+  const configPath = resolveOpenClawConfigPath();
+  const raw = await readFile(configPath, "utf8");
+  const config = JSON.parse(raw);
+  config.plugins ||= {};
+  config.plugins.entries ||= {};
+  config.plugins.entries[plugin.id] ||= { enabled: true, config: {} };
+  const pluginEntry = config.plugins.entries[plugin.id];
+  pluginEntry.enabled = true;
+  pluginEntry.config ||= {};
+  pluginEntry.config.peers = Array.isArray(peersInput) ? peersInput : [];
+  await writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
+}
+
+function matchesPeer(peer: any, params: any) {
+  if (!peer) return false;
+  return (params?.id && peer.id === params.id)
+    || (params?.name && peer.name === params.name)
+    || (params?.agentCardUrl && peer.agentCardUrl === params.agentCardUrl);
+}
+
+function resolveOpenClawConfigPath() {
+  return path.join(process.env.HOME || ".", ".openclaw", "openclaw.json");
 }
 
 function slugify(value: string) {

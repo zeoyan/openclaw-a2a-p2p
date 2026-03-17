@@ -1,6 +1,8 @@
 # Configuration
 
-## Minimal plugin config
+This file is for the small set of config fields that actually matter.
+
+## The only self config that really matters
 
 ```json
 {
@@ -15,41 +17,18 @@
           },
           "agentCard": {
             "name": "小爪",
-            "description": "OpenClaw A2A peer",
-            "url": "http://HOST:PORT/a2a/jsonrpc",
-            "provider": "OpenClaw",
-            "streaming": true,
-            "pushNotifications": false,
-            "skills": [
-              {
-                "id": "chat",
-                "name": "chat",
-                "description": "General-purpose text chat routed into OpenClaw"
-              }
-            ]
+            "url": "http://HOST:PORT/a2a/jsonrpc"
           },
           "routing": {
-            "sessionKey": "a2a-peer-inbox",
+            "sessionKey": "a2a-peer-xiaozhua",
             "mode": "subagent",
             "waitTimeoutMs": 15000
           },
           "security": {
             "inboundAuth": "bearer",
-            "token": "REPLACE_WITH_LOCAL_INBOUND_TOKEN",
-            "maxBodyBytes": 262144
+            "token": "REPLACE_WITH_LOCAL_INBOUND_TOKEN"
           },
-          "peers": [
-            {
-              "id": "claw-brother",
-              "name": "爪子哥",
-              "agentCardUrl": "http://PEER_HOST:PEER_PORT/a2a/.well-known/agent-card.json",
-              "auth": {
-                "type": "bearer",
-                "token": "REPLACE_WITH_PEER_INBOUND_TOKEN"
-              },
-              "labels": ["peer", "openclaw"]
-            }
-          ]
+          "peers": []
         }
       }
     }
@@ -57,67 +36,41 @@
 }
 ```
 
-## Remote-mode preflight
+## Meaning of each field
 
-If the goal is cross-machine communication, all of these must be true:
+### `server.allowRemote`
+Allows non-loopback callers to hit this plugin's routes.
 
-- `server.allowRemote = true`
-- `agentCard.url` uses a host or domain the peer can reach
-- `agentCard.url` must **not** use `127.0.0.1` or `localhost`
-- OpenClaw `gateway.bind` must not be loopback-only for that network path
-- the peer network path must actually exist (private LAN, reverse proxy, Tailscale, etc.)
-
-`server.allowRemote=true` alone does **not** make the node externally reachable.
-
-## Important distinctions
+This is necessary for cross-machine use, but **not sufficient by itself**.
 
 ### `agentCard.url`
-This is the node's own JSON-RPC endpoint.
+This node's own JSON-RPC endpoint.
 
-Example:
+For real peer-to-peer use, do **not** leave this on:
 
-```text
-http://HOST:PORT/a2a/jsonrpc
-```
+- `127.0.0.1`
+- `localhost`
 
-For real peer-to-peer use, `HOST` must be reachable from another machine.
+### `routing.sessionKey`
+A dedicated local routing session for inbound A2A traffic.
 
-Avoid these for cross-machine setup:
+Do not reuse a busy human chat session.
 
-```text
-http://127.0.0.1:18789/a2a/jsonrpc
-http://localhost:18789/a2a/jsonrpc
-```
+### `security.token`
+This node's inbound bearer token.
 
-Those are loopback-only addresses and are only appropriate for same-host testing.
+Other peers need this token in order to call this node.
 
-### `peers[].agentCardUrl`
-This is the remote peer's Agent Card URL.
+### `peers[]`
+This node's local address book of other A2A peers.
 
-Example:
+## The one network rule that still matters
 
-```text
-http://PEER_HOST:PEER_PORT/a2a/.well-known/agent-card.json
-```
+Cross-machine communication still requires all of these:
 
-## Routing guidance
+- `server.allowRemote = true`
+- `agentCard.url` is reachable from the peer
+- `gateway.bind` is not loopback-only
+- the actual network path exists
 
-Use a dedicated routing session.
-
-Recommended patterns:
-
-- `a2a-peer-inbox`
-- `a2a-peer-clawbro`
-- `a2a-peer-codex`
-- `a2a-peer-claude`
-
-Avoid reusing an actively busy human chat session.
-
-## Security guidance
-
-- prefer private networking or Tailscale
-- give each node its own inbound bearer token
-- store peer tokens carefully
-- only set `allowRemote=true` when remote access is intended
-- do not confuse `allowRemote=true` with full network exposure; gateway and network path still matter
-- before declaring setup complete, verify the Agent Card from another machine, not only from localhost
+If any of those are false, the plugin may be configured correctly but still unreachable.

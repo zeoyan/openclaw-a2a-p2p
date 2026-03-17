@@ -3,7 +3,4 @@ set -euo pipefail
 
 PLUGIN_DIR="${1:-$(cd "$(dirname "$0")/.." && pwd)}"
 
-echo "Installing plugin from: $PLUGIN_DIR"
-openclaw plugins install "$PLUGIN_DIR"
-openclaw gateway restart
-openclaw plugins list
+exec "$PLUGIN_DIR/scripts/install-and-init.sh" "$PLUGIN_DIR"

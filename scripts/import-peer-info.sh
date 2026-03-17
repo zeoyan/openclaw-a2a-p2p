@@ -1,22 +1,38 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <peer-info.json> [peer-id] [peer-name]" >&2
+if [[ $# -lt 1 && -t 0 ]]; then
+  echo "Usage: $0 <peer-info.json|raw-json|-> [peer-id] [peer-name]" >&2
+  echo "  - use '-' to read JSON from stdin" >&2
   exit 1
 fi
 
-PEER_INFO_FILE="$1"
+PEER_INFO_SOURCE="${1:--}"
 PEER_ID="${2:-}"
 PEER_NAME="${3:-}"
 OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-$HOME/.openclaw/openclaw.json}"
 PLUGIN_ID="${PLUGIN_ID:-a2a-p2p}"
+STDIN_JSON=""
 
-node - <<'NODE' "$OPENCLAW_CONFIG" "$PLUGIN_ID" "$PEER_INFO_FILE" "$PEER_ID" "$PEER_NAME"
+if [[ "$PEER_INFO_SOURCE" == "-" ]]; then
+  STDIN_JSON="$(cat)"
+fi
+
+node - <<'NODE' "$OPENCLAW_CONFIG" "$PLUGIN_ID" "$PEER_INFO_SOURCE" "$PEER_ID" "$PEER_NAME" "$STDIN_JSON"
 const fs = require('fs');
-const [configPath, pluginId, peerInfoFile, peerIdOverride, peerNameOverride] = process.argv.slice(2);
+const [configPath, pluginId, peerInfoSource, peerIdOverride, peerNameOverride, stdinJson] = process.argv.slice(2);
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-const peerInfo = JSON.parse(fs.readFileSync(peerInfoFile, 'utf8'));
+function readPeerInfo(source, stdinRaw) {
+  if (!source || source === '-') {
+    if (!stdinRaw || !stdinRaw.trim()) throw new Error('stdin peer info is empty');
+    return JSON.parse(stdinRaw);
+  }
+  if (fs.existsSync(source)) {
+    return JSON.parse(fs.readFileSync(source, 'utf8'));
+  }
+  return JSON.parse(source);
+}
+const peerInfo = readPeerInfo(peerInfoSource, stdinJson);
 config.plugins ||= {};
 config.plugins.entries ||= {};
 config.plugins.entries[pluginId] ||= { enabled: true, config: {} };
@@ -34,7 +50,7 @@ const entry = {
   },
   labels: ['peer', 'imported']
 };
-const idx = cfg.peers.findIndex((p) => p && (p.id === peerId || p.name === peerName));
+const idx = cfg.peers.findIndex((p) => p && (p.id === peerId || p.name === peerName || p.agentCardUrl === peerInfo.agentCardUrl));
 if (idx >= 0) cfg.peers[idx] = entry;
 else cfg.peers.push(entry);
 fs.writeFileSync(configPath, JSON.stringify(config, null, 2));

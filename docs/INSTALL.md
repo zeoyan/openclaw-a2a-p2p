@@ -1,39 +1,40 @@
 # Installation
 
-If you are opening this repository for the first time, read `START-HERE.md` first.
+If you want the shortest path, use the one-shot bootstrap script.
 
-## Requirements
-
-- OpenClaw installed
-- access to `openclaw` CLI
-- a reachable network path between peers
-- a plan for bearer tokens and routing sessions
-
-## Important: install success is not the same as remote reachability
-
-You can install and load this plugin successfully while the node is still **local-only**.
-
-That usually happens when:
-
-- `server.allowRemote = false`
-- `agentCard.url` uses `127.0.0.1` or `localhost`
-- OpenClaw `gateway.bind = loopback`
-
-If another machine is supposed to call this node, fix those before claiming setup is complete.
-
-## Before claiming remote readiness
-
-Run the remote-mode preflight against the OpenClaw config:
+## Quick start
 
 ```bash
-./scripts/preflight-remote.sh ~/.openclaw/openclaw.json
+git clone <REPO_URL>
+cd openclaw-a2a-p2p
+./scripts/install-and-init.sh
 ```
 
-Then review:
+This is the recommended default for users and agents with no prior setup context.
 
-- `docs/AI-AGENT-OPERATOR-CHECKLIST.md`
+It will:
 
-## Install from a local folder
+- install the plugin
+- enable the plugin config
+- generate a bearer token if needed
+- create a dedicated routing session key
+- try to infer a reachable base URL
+- export this node's shareable peer info
+- write it to `~/.openclaw/state/a2a-p2p/peer-info.json`
+- restart the gateway last
+
+This means the most important output already exists before restart happens.
+
+Optional environment variables:
+
+- `PUBLIC_BASE_URL=https://example.com`
+- `A2A_NAME=小爪`
+- `A2A_TOKEN=...`
+- `A2A_ROUTING_SESSION_KEY=a2a-peer-xiaozhua`
+
+## Manual path
+
+If you want to do everything step-by-step:
 
 ```bash
 openclaw plugins install /path/to/openclaw-a2a-p2p
@@ -41,41 +42,27 @@ openclaw gateway restart
 openclaw plugins info a2a-p2p
 ```
 
-## Install from a cloned GitHub repository
+Then configure:
 
-```bash
-git clone <REPO_URL>
-cd openclaw-a2a-p2p
-openclaw plugins install "$PWD"
-openclaw gateway restart
-openclaw plugins info a2a-p2p
-```
+- `server.allowRemote=true`
+- `agentCard.url`
+- `routing.sessionKey`
+- `security.token`
 
-## Verify plugin load
+## Important
 
-Expected result:
+Install success is not the same as remote reachability.
 
-- plugin id: `a2a-p2p`
-- status: `loaded`
-- tools visible in plugin info
+The plugin can be installed and loaded while the node is still local-only.
 
-## Agent-friendly automated path
+If another machine is supposed to call this node, also verify:
 
-If you want to automate the host bootstrap for Tailscale-based connectivity, use:
+- `agentCard.url` is reachable from that machine
+- `gateway.bind` is not loopback-only
+- the actual network path exists
 
-```bash
-TS_AUTHKEY=tskey-... ./scripts/bootstrap-tailnet.sh
-```
+If something fails, then look at:
 
-Without `TS_AUTHKEY`, the script can still install Tailscale and print a login URL, but a human must complete the tailnet login.
-
-## If install succeeds but routes still fail
-
-Check:
-
-1. gateway was restarted
-2. plugin config exists under `plugins.entries.a2a-p2p.config`
-3. `agentCard.url` points at the JSON-RPC endpoint
-4. `server.allowRemote=true` if remote access is intended
-5. OpenClaw `gateway.bind` is not loopback-only for the intended peer path
-6. the node can actually bind and serve the gateway
+- `docs/PITFALLS.md`
+- `docs/TAILSCALE.md`
+- `docs/ARCHITECTURE.md`

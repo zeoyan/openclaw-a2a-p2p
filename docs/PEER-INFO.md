@@ -1,8 +1,9 @@
 # Peer information exchange
 
-This repository uses a **minimal peer-info format** for basic connectivity.
+This repository now treats peer exchange as a simple two-step workflow:
 
-The goal is not to export every local detail. The goal is to export only the information another installed `a2a-p2p` node needs in order to connect.
+1. initialize this node and export **my peer info**
+2. later import **someone else's peer info** when I want to talk to them
 
 ## Minimal peer-info fields
 
@@ -14,42 +15,39 @@ Recommended basic format:
 - `agentCardUrl`
 - `bearerToken`
 
-Why these fields:
+Example:
 
-- `agentCardUrl` is the remote discovery entrypoint
-- `bearerToken` is needed for this plugin's default inbound auth model
-- `name` gives the importing side a stable human-readable peer identity
-- `kind` and `version` keep the exchange format machine-readable and evolvable
+```json
+{
+  "kind": "openclaw-a2a-peer-info",
+  "version": 1,
+  "name": "小爪",
+  "agentCardUrl": "https://example.com/a2a/.well-known/agent-card.json",
+  "bearerToken": "replace-with-real-token"
+}
+```
 
-Not exported in basic mode:
+## Export my peer info
 
-- `jsonRpcUrl`
-- `description`
-- `routingMode`
-- `sessionKey`
-- other local implementation details
+Preferred in-agent path:
 
-## Exchange flow
+- `a2a_export_peer_info`
 
-1. A node exports a shareable `peer-info.json`
-2. Another installed peer imports it into local plugin config
-3. That peer can export its own `peer-info.json` in return
-4. Each side repeats the same import flow for any additional peers
-
-After this, peers know how to discover and authenticate to each other.
-
-## Export
+Shell path:
 
 ```bash
 ./scripts/export-peer-info.sh > peer-info.json
 ```
 
-## Import
+## Import someone else's peer info
 
 Preferred in-agent path:
 
-- use `a2a_build_peer_entry`
-- then merge the returned peer entry into local plugin config
+- `a2a_import_peer_info`
+
+Lower-level helper:
+
+- `a2a_build_peer_entry`
 
 Shell path:
 
@@ -57,11 +55,21 @@ Shell path:
 ./scripts/import-peer-info.sh ./peer-info.json claw-brother "爪子哥"
 ```
 
-This updates the local `a2a-p2p` config and adds or replaces a peer entry.
+## Communication model
+
+This plugin keeps a **local peer registry**.
+
+That means:
+
+- if node A wants to send to node B, A must import B's peer info
+- if node B also wants to send to node A, B must also import A's peer info
+
+So full two-way communication usually means both sides exchange peer info.
 
 ## Important note
 
-This solves peer metadata exchange. It does **not** magically create internet reachability.
+Peer-info exchange solves discovery + auth metadata.
+It does **not** create network reachability by itself.
 
 At least one side still needs a network path the other side can reach, such as:
 
@@ -69,8 +77,3 @@ At least one side still needs a network path the other side can reach, such as:
 - reverse proxy / domain
 - same private network
 - optional Tailscale
-
-## Recommended lightweight default
-
-Use A2A over HTTP(S) as the default design.
-Treat Tailscale, SSH tunnel, and other network helpers as optional deployment modes rather than required dependencies.
